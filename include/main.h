@@ -35,6 +35,10 @@
 #define PROS_USE_LITERALS
 
 #include "api.h"
+#include "globals.hpp"
+#include "mech_lib.hpp"
+#include "PurePursuit/api.hpp"
+
 
 /**
  * You should add more #includes here
@@ -50,7 +54,7 @@
  * concurrently! The okapi namespace will export all symbols inside the pros
  * namespace.
  */
-// using namespace pros;
+using namespace pros;
 // using namespace pros::literals;
 // using namespace okapi;
 
