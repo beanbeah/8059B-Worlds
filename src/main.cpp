@@ -8,22 +8,25 @@
  */
 void initialize() {
 	//base Blue
-	Motor BLU(BLUPort,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
-	Motor BLD(BLDPort,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
-	Motor BRU(BRUPort,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
-	Motor BRD(BRDPort,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
+	Motor FLU(FLUPort,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
+	Motor FLD(FLDPort,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
+	Motor FRU(FRUPort,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
+	Motor FRD(FRDPort,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
 	Motor DF(Differential,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
 
 	//Lift green
-	Motor armLeft(armLeftPort,E_MOTOR_GEARSET_18,false,E_MOTOR_ENCODER_DEGREES);
+	Motor armLeft(armLeftPort,E_MOTOR_GEARSET_18,true,E_MOTOR_ENCODER_DEGREES);
 	Motor armRight(armRightPort,E_MOTOR_GEARSET_18,false,E_MOTOR_ENCODER_DEGREES);
 
 	//tipper red
-	Motor tilt(tiltPort,E_MOTOR_GEARSET_36,false,E_MOTOR_ENCODER_DEGREES);
+	Motor tilt(tiltPort,E_MOTOR_GEARSET_36,true,E_MOTOR_ENCODER_DEGREES);
 
 	//penumatic init
 	ADIDigitalOut canisterL(canisterLeftPort);
 	ADIDigitalOut canisterR(canisterRightPort);
+	ADIDigitalOut clamp(clampPort);
+	ADIDigitalOut tiltLeft(tiltLeftPort);
+	ADIDigitalOut tiltRight(tiltRightPort);
 
 	//sensor init
 	ADIAnalogIn armPotentiometer(armPotentiometerPort);
@@ -36,6 +39,9 @@ void initialize() {
 	// Mech tasks
 	Task sensorTask(sensors, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Sensor Task");
 	Task debugTask(Debug, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
+	Task armControlTask(armControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Arm Control Task");
+	Task tiltControlTask(tiltControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Tilt Control Task");
+	Task canisterControlTask(canisterControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Canister Control Task");
 
 	//temp enable odom/pp task
 	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
@@ -91,10 +97,10 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	Motor BLU(BLUPort);
-	Motor BLD(BLDPort);
-	Motor BRU(BRUPort);
-	Motor BRD(BRDPort);
+	Motor FLU(FLUPort);
+	Motor FLD(FLDPort);
+	Motor FRU(FRUPort);
+	Motor FRD(FRDPort);
 	Motor DF(Differential);
 	Motor armLeft(armLeftPort);
 	Motor armRight(armRightPort);
@@ -102,15 +108,19 @@ void opcontrol() {
 
 	ADIDigitalOut canisterL(canisterLeftPort);
 	ADIDigitalOut canisterR(canisterRightPort);
+	ADIDigitalOut clamp(clampPort);
+	ADIDigitalOut tiltLeft(tiltLeftPort);
+	ADIDigitalOut tiltRight(tiltRightPort);
 
-	BLU.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	BLD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	BRU.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	BRD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FLU.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FLD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FRU.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FRD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 	DF.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 
 	Controller master(E_CONTROLLER_MASTER);
 
+  int armPos = 0, tiltPos = 0;
 	bool tankDrive = true;
 	while(true) {
 		double left, right;
@@ -127,13 +137,20 @@ void opcontrol() {
 		}
 
 		int avg = (left + right)/2;
-		BLU.move(left);
-		BLD.move(left);
-		BRU.move(right);
-		BRD.move(right);
+		FLU.move(left);
+		FLD.move(left);
+		FRU.move(right);
+		FRD.move(right);
 		DF.move(avg);
 
-		//drive control
+		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 2) driverArmPos(++armPos);
+		else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
+
+		if(master.get_digital_new_press(DIGITAL_R1)) driverTiltPos((++tiltPos)%4);
+
+		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
+		if(master.get_digital_new_press(DIGITAL_R2)) toggleTiltClampState();
+		if(master.get_digital_new_press(DIGITAL_UP)) toggleCanisterState();
 
 		posPrintMaster();
 

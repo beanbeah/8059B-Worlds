@@ -7,22 +7,22 @@ double measuredV = 0, measuredVL = 0, measuredVR = 0;
 // angle = mathematical angle, taken from x-axis, counter clockwise as positive
 void sensors(void * ignore){
    //port data from all sensors
-   Motor BLU(BLUPort);
-   Motor BLD(BLDPort);
-   Motor BRU(BRUPort);
-   Motor BRD(BRDPort);
+   Motor FLU(FLUPort);
+   Motor FLD(FLDPort);
+   Motor FRU(FRUPort);
+   Motor FRD(FRDPort);
    Imu imu(imuPort);
    Rotation encoderR(encdRPort);
    Rotation encoderS(encdSPort);
    bool calibrated = false;
    int start = millis();
    while(true){
-     encdR = encoderR.get_position()*inPerDeg;
-     encdS = encoderS.get_position()*inPerDeg;
+     encdR = encoderR.get_position()/100*inPerDeg; //centidegree /100 = degree
+     encdS = encoderS.get_position()/100*inPerDeg;
      bearing = imu.is_calibrating()? 0 : (imu.get_rotation()*toRad + offset*toRad);
      angle = boundRad(halfPI - bearing);
-     measuredVL = (BLD.get_actual_velocity() + BLD.get_actual_velocity())/2 * RPMToInPerMs;
-     measuredVR = (BRD.get_actual_velocity() + BRD.get_actual_velocity())/2 * RPMToInPerMs;;
+     measuredVL = (FLD.get_actual_velocity() + FLD.get_actual_velocity())/2 * RPMToInPerMs;
+     measuredVR = (FRD.get_actual_velocity() + FRD.get_actual_velocity())/2 * RPMToInPerMs;;
      measuredV = (measuredVL + measuredVR)/2;
      delay(5);
    }

@@ -16,6 +16,8 @@ void encdPrintTerminal(){
   printf("EncdS: %4.1f \t EncdR: %4.1f\n", encdS, encdR);
 }
 
+
+
 void Debug(void * ignore) {
   while(true) {
     switch(DEBUG_MODE) {
