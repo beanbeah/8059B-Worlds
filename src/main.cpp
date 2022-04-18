@@ -118,6 +118,7 @@ void opcontrol() {
 	FRD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 	DF.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 
+
 	Controller master(E_CONTROLLER_MASTER);
 
   int armPos = 0, tiltPos = 0;
@@ -143,13 +144,15 @@ void opcontrol() {
 		FRD.move(right);
 		DF.move(avg);
 
-		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 2) driverArmPos(++armPos);
+		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 4) driverArmPos(++armPos);
 		else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
 
-		if(master.get_digital_new_press(DIGITAL_R1)) driverTiltPos((++tiltPos)%4);
+		//if(master.get_digital_new_press(DIGITAL_R1)) driverTiltPos((++tiltPos)%6);
+		if(master.get_digital_new_press(DIGITAL_R1) && tiltPos < 5) driverTiltPos(++tiltPos);
+		else if(master.get_digital_new_press(DIGITAL_R2) && tiltPos > 0) driverTiltPos(--tiltPos);
 
 		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
-		if(master.get_digital_new_press(DIGITAL_R2)) toggleTiltClampState();
+		//if(master.get_digital_new_press(DIGITAL_R2)) toggleTiltClampState();
 		if(master.get_digital_new_press(DIGITAL_UP)) toggleCanisterState();
 
 		posPrintMaster();

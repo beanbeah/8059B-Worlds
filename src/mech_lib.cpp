@@ -1,11 +1,11 @@
 #include "main.h"
 
-const double armHeights[] = {0,1,2,3};
-const double progArmHeights[] = {0,0,0,0};
-double armTarg = armHeights[0], armKP = 0.5;
-const double tiltHeights[] = {1940,2350,2600,2800};
-const double progTiltHeights[] = {1940,2350,2600,2800};
-double tiltTarg = tiltHeights[0], tiltKP = 0.001;
+const double armHeights[] = {2405,2700,2950,3050,3590};
+const double progArmHeights[] = {2405,2700,3050,2995,3590};
+double armTarg = armHeights[0], armKP = 0.3, armDownKP = 0.15;
+const double tiltHeights[] = {1940,2380,2450,2650,2900,3000};
+const double progTiltHeights[] = {1940,2380,2450,2650,2900,3000};
+double tiltTarg = tiltHeights[0], tiltKP = 0.01;
 bool tiltClampState = LOW, armClampState = LOW, canisterState = LOW;
 
 void armControl(void*ignore) {
@@ -13,10 +13,14 @@ void armControl(void*ignore) {
 	Motor armRight(armRightPort,E_MOTOR_GEARSET_18,false,E_MOTOR_ENCODER_DEGREES);
   ADIDigitalOut clamp(clampPort);
   ADIAnalogIn armPotentiometer(armPotentiometerPort);
+  armLeft.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+  armRight.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   while(true) {
+    double kp;
     double armError = armTarg - armPotentiometer.get_value();
-    armLeft.move(armError*armKP);
-    armRight.move(armError*armKP);
+    armError < 0 ? kp = armDownKP: kp = armKP;
+    armLeft.move(armError*kp);
+    armRight.move(armError*kp);
     //printf("Target: %f, Potentiometer: %d, Error: %f\n", armTarg, armPotentiometer.get_value(), armError);
     clamp.set_value(armClampState);
     delay(2);
@@ -46,10 +50,11 @@ void tiltControl(void*ignore) {
   ADIAnalogIn tiltPotentiometer(tiltPotentiometerPort);
   ADIDigitalOut tiltLeft(tiltLeftPort);
 	ADIDigitalOut tiltRight(tiltRightPort);
+  tilt.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   while(true) {
     double tiltError = -(tiltTarg - tiltPotentiometer.get_value());
     tilt.move(tiltError*armKP);
-    printf("Target: %f, Potentiometer: %d, Error: %f\n", tiltTarg, tiltPotentiometer.get_value(), tiltError);
+    //printf("Target: %f, Potentiometer: %d, Error: %f\n", tiltTarg, tiltPotentiometer.get_value(), tiltError);
     tiltLeft.set_value(tiltClampState);
     tiltRight.set_value(tiltClampState);
     delay(2);
