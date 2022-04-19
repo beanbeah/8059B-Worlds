@@ -121,7 +121,6 @@ void opcontrol() {
 
 	Controller master(E_CONTROLLER_MASTER);
 
-  int armPos = 0, tiltPos = 0;
 	bool tankDrive = true;
 	while(true) {
 		double left, right;
@@ -144,16 +143,15 @@ void opcontrol() {
 		FRD.move(right);
 		DF.move(avg);
 
-		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 4) driverArmPos(++armPos);
-		else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
+		if(master.get_digital_new_press(DIGITAL_X))	tallSelected();
+		if(master.get_digital_new_press(DIGITAL_A))	neutralSelected();
+		if(master.get_digital_new_press(DIGITAL_B)) allianceSelected();
 
-		//if(master.get_digital_new_press(DIGITAL_R1)) driverTiltPos((++tiltPos)%6);
-		if(master.get_digital_new_press(DIGITAL_R1) && tiltPos < 5) driverTiltPos(++tiltPos);
-		else if(master.get_digital_new_press(DIGITAL_R2) && tiltPos > 0) driverTiltPos(--tiltPos);
+		if(master.get_digital_new_press(DIGITAL_L1)) toggleInnerBranch();
+		if(master.get_digital_new_press(DIGITAL_L2)) reset();
 
-		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
-		//if(master.get_digital_new_press(DIGITAL_R2)) toggleTiltClampState();
-		if(master.get_digital_new_press(DIGITAL_UP)) toggleCanisterState();
+		if(master.get_digital_new_press(DIGITAL_R1)) toggleCanisterState();
+		if(master.get_digital_new_press(DIGITAL_R2)) toggleArmClampState();
 
 		posPrintMaster();
 

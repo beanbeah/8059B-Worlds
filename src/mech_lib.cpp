@@ -1,11 +1,18 @@
 #include "main.h"
 
-const double armHeights[] = {2405,2700,2950,3050,3590};
-const double progArmHeights[] = {2405,2700,3050,2995,3590};
-double armTarg = armHeights[0], armKP = 0.3, armDownKP = 0.15;
-const double tiltHeights[] = {1940,2380,2450,2650,2900,3000};
-const double progTiltHeights[] = {1940,2380,2450,2650,2900,3000};
-double tiltTarg = tiltHeights[0], tiltKP = 0.01;
+struct GoalHeight {
+  double armHeight, tiltHeight;
+  bool hasInner;
+  double armInnerHeight, tiltInnerHeight;
+};
+struct GoalHeight tall = {3590,2380,true,3590,2650}, neutral = {2950,2450,true,3050,3000}, alliance = {2700,2900,false,0,0}, init = {2405,1940,false,0,0},selected=init;
+bool innerBranch = false, lifted = false, unselected = true;
+
+double armKP = 0.3, armDownKP = 0.15, armHighestKP = 0.1;
+
+double armTarg = init.armHeight, defaultKP = armKP;
+double tiltTarg = init.tiltHeight, tiltKP = 0.25;
+
 bool tiltClampState = LOW, armClampState = LOW, canisterState = LOW;
 
 void armControl(void*ignore) {
@@ -16,11 +23,16 @@ void armControl(void*ignore) {
   armLeft.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   armRight.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   while(true) {
-    double kp;
     double armError = armTarg - armPotentiometer.get_value();
-    armError < 0 ? kp = armDownKP: kp = armKP;
-    armLeft.move(armError*kp);
-    armRight.move(armError*kp);
+
+    if (armError < 0){
+      if (fabs(armError) >=500) defaultKP = armHighestKP;
+      else defaultKP = armDownKP;
+    } else defaultKP = armKP;
+
+
+    armLeft.move(armError*defaultKP);
+    armRight.move(armError*defaultKP);
     //printf("Target: %f, Potentiometer: %d, Error: %f\n", armTarg, armPotentiometer.get_value(), armError);
     clamp.set_value(armClampState);
     delay(2);
@@ -28,22 +40,6 @@ void armControl(void*ignore) {
 }
 
 void setArmHeight(double height) {armTarg = height;}
-
-void driverArmPos(int pos) {
-  armTarg = armHeights[pos];
-}
-
-void setArmPos(int pos) {
-  armTarg = progArmHeights[pos];
-}
-
-void setArmClampState(bool state) {
-  armClampState = state;
-}
-
-void toggleArmClampState() {
-  armClampState = !armClampState;
-}
 
 void tiltControl(void*ignore) {
   Motor tilt(tiltPort,E_MOTOR_GEARSET_36,true,E_MOTOR_ENCODER_DEGREES);
@@ -54,7 +50,7 @@ void tiltControl(void*ignore) {
   while(true) {
     double tiltError = -(tiltTarg - tiltPotentiometer.get_value());
     tilt.move(tiltError*armKP);
-    //printf("Target: %f, Potentiometer: %d, Error: %f\n", tiltTarg, tiltPotentiometer.get_value(), tiltError);
+    printf("Target: %f, Potentiometer: %d, Error: %f\n", tiltTarg, tiltPotentiometer.get_value(), tiltError);
     tiltLeft.set_value(tiltClampState);
     tiltRight.set_value(tiltClampState);
     delay(2);
@@ -63,12 +59,47 @@ void tiltControl(void*ignore) {
 
 void setTiltHeight(double height) {tiltTarg = height;}
 
-void driverTiltPos(int pos) {
-  tiltTarg = tiltHeights[pos];
+void tallSelected(){
+  if(!lifted){selected = tall; unselected = false;}
+}
+void neutralSelected(){
+  if(!lifted){selected = neutral; unselected = false;}
+}
+void allianceSelected(){
+  if(!lifted){selected = alliance; unselected = false;}
 }
 
-void setTiltPos (int pos) {
-  tiltTarg = progTiltHeights[pos];
+void reset(){
+  selected=init;
+  lifted = false;
+  unselected = true;
+  armTarg = selected.armHeight;
+  tiltTarg = selected.tiltHeight;
+}
+
+void toggleInnerBranch(){
+  if (!lifted && !unselected){
+    innerBranch = false;
+    lifted = true;
+  }
+  if(selected.hasInner)innerBranch = !innerBranch;
+
+  if (innerBranch && lifted){
+    armTarg = selected.armInnerHeight;
+    tiltTarg = selected.tiltInnerHeight;
+  } else if (!innerBranch && lifted) {
+    armTarg = selected.armHeight;
+    tiltTarg = selected.tiltHeight;
+  }
+
+}
+
+void setArmClampState(bool state) {
+  armClampState = state;
+}
+
+void toggleArmClampState() {
+  armClampState = !armClampState;
 }
 
 void setTiltClampState(bool state) {
@@ -78,6 +109,7 @@ void setTiltClampState(bool state) {
 void toggleTiltClampState() {
   tiltClampState = !tiltClampState;
 }
+
 
 void canisterControl(void*ignore) {
   ADIDigitalOut canisterL(canisterLeftPort);

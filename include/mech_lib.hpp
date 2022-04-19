@@ -3,17 +3,19 @@
 
 void armControl(void*ignore);
 void setArmHeight(double height);
-void setArmPos(int pos);
-void driverArmPos(int pos);
 void setArmClampState(bool state);
 void toggleArmClampState();
 
 void tiltControl(void*ignore);
 void setTiltHeight(double height);
-void setTiltPos (int pos);
-void driverTiltPos(int pos);
 void setTiltClampState(bool state);
 void toggleTiltClampState();
+
+void tallSelected();
+void neutralSelected();
+void allianceSelected();
+void reset();
+void toggleInnerBranch();
 
 void canisterControl(void*ignore);
 void setCanisterState(bool state);
