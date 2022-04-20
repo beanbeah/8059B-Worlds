@@ -1,6 +1,13 @@
 #ifndef _MECH_LIB_HPP_
 #define _MECH_LIB_HPP_
 
+struct GoalHeight {
+  double armHeight, tiltHeight;
+  bool hasInner;
+  double armInnerHeight, tiltInnerHeight;
+  double upKP, downKP, changeKP;
+};
+
 void armControl(void*ignore);
 void setArmHeight(double height);
 void setArmClampState(bool state);

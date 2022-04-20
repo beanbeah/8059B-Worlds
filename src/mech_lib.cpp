@@ -1,18 +1,37 @@
 #include "main.h"
 
-struct GoalHeight {
-  double armHeight, tiltHeight;
-  bool hasInner;
-  double armInnerHeight, tiltInnerHeight;
+
+
+struct GoalHeight tall = {
+  3590,2380,  //armHeight, tiltHeight
+  true,       //has Inner Branch
+  3590,2650   //armInnerHeight, tiltInnerHeight
+  //upKP, downKP, changeKP
 };
-struct GoalHeight tall = {3590,2380,true,3590,2650}, neutral = {2950,2450,true,3050,3000}, alliance = {2700,2900,false,0,0}, init = {2405,1940,false,0,0},selected=init;
-bool innerBranch = false, lifted = false, unselected = true;
+struct GoalHeight neutral = {
+  2950,2450,  //armHeight, tiltHeight
+  true,       //has Inner Branch
+  3050,3000   //armInnerHeight, tiltInnerHeight
+  //upKP, downKP, changeKP
+};
+struct GoalHeight alliance = {
+  2700,2900,  //armHeight, tiltHeight
+  false,      //has Inner Branch
+  0,0         //armInnerHeight, tiltInnerHeight
+  //upKP, downKP, changeKP
+};
+struct GoalHeight init = {
+  2405,1940,  //armHeight, tiltHeight
+  false,      //has Inner Branch
+  0,0,        //armInnerHeight, tiltInnerHeight
+  0,0,0       //upKP, downKP, changeKP
+};
 
-double armKP = 0.3, armDownKP = 0.15, armHighestKP = 0.1;
-
-double armTarg = init.armHeight, defaultKP = armKP;
-double tiltTarg = init.tiltHeight, tiltKP = 0.25;
-
+struct GoalHeight selected=init;
+bool innerBranch = false, lifted = false, unselected = true, reachedTarg = false;
+double leeway = 15;
+double armTarg = init.armHeight, armKP = 0.2;
+double tiltTarg = init.tiltHeight, tiltKP = 0.2;
 bool tiltClampState = LOW, armClampState = LOW, canisterState = LOW;
 
 void armControl(void*ignore) {
@@ -24,17 +43,11 @@ void armControl(void*ignore) {
   armRight.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   while(true) {
     double armError = armTarg - armPotentiometer.get_value();
-
-    if (armError < 0){
-      if (fabs(armError) >=500) defaultKP = armHighestKP;
-      else defaultKP = armDownKP;
-    } else defaultKP = armKP;
-
-
-    armLeft.move(armError*defaultKP);
-    armRight.move(armError*defaultKP);
+    armLeft.move(armError*armKP);
+    armRight.move(armError*armKP);
     //printf("Target: %f, Potentiometer: %d, Error: %f\n", armTarg, armPotentiometer.get_value(), armError);
     clamp.set_value(armClampState);
+    if (!lifted)fabs(armError) <= leeway ? lifted = true : lifted = false;
     delay(2);
   }
 }
@@ -49,7 +62,7 @@ void tiltControl(void*ignore) {
   tilt.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
   while(true) {
     double tiltError = -(tiltTarg - tiltPotentiometer.get_value());
-    tilt.move(tiltError*armKP);
+    tilt.move(tiltError*tiltKP);
     printf("Target: %f, Potentiometer: %d, Error: %f\n", tiltTarg, tiltPotentiometer.get_value(), tiltError);
     tiltLeft.set_value(tiltClampState);
     tiltRight.set_value(tiltClampState);
@@ -70,6 +83,7 @@ void allianceSelected(){
 }
 
 void reset(){
+  armKP = selected.downKP;
   selected=init;
   lifted = false;
   unselected = true;
@@ -80,18 +94,21 @@ void reset(){
 void toggleInnerBranch(){
   if (!lifted && !unselected){
     innerBranch = false;
-    lifted = true;
+    armKP = selected.upKP;
+    armTarg = selected.armHeight;
+    tiltTarg = selected.tiltHeight;
   }
   if(selected.hasInner)innerBranch = !innerBranch;
 
   if (innerBranch && lifted){
     armTarg = selected.armInnerHeight;
     tiltTarg = selected.tiltInnerHeight;
+    armKP = selected.changeKP;
   } else if (!innerBranch && lifted) {
     armTarg = selected.armHeight;
     tiltTarg = selected.tiltHeight;
+    armKP = selected.changeKP;
   }
-
 }
 
 void setArmClampState(bool state) {
