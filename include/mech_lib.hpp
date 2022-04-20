@@ -1,7 +1,7 @@
 #ifndef _MECH_LIB_HPP_
 #define _MECH_LIB_HPP_
 
-struct GoalHeight {
+struct Goal {
   double armHeight, tiltHeight;
   bool hasInner;
   double armInnerHeight, tiltInnerHeight;

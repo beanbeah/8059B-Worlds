@@ -1,35 +1,33 @@
 #include "main.h"
 
-
-
-struct GoalHeight tall = {
+struct Goal tall = {
   3590,2380,  //armHeight, tiltHeight
   true,       //has Inner Branch
   3590,2650   //armInnerHeight, tiltInnerHeight
   //upKP, downKP, changeKP
 };
-struct GoalHeight neutral = {
+struct Goal neutral = {
   2950,2450,  //armHeight, tiltHeight
   true,       //has Inner Branch
   3050,3000   //armInnerHeight, tiltInnerHeight
   //upKP, downKP, changeKP
 };
-struct GoalHeight alliance = {
+struct Goal alliance = {
   2700,2900,  //armHeight, tiltHeight
   false,      //has Inner Branch
   0,0         //armInnerHeight, tiltInnerHeight
   //upKP, downKP, changeKP
 };
-struct GoalHeight init = {
+struct Goal init = {
   2405,1940,  //armHeight, tiltHeight
   false,      //has Inner Branch
   0,0,        //armInnerHeight, tiltInnerHeight
   0,0,0       //upKP, downKP, changeKP
 };
 
-struct GoalHeight selected=init;
-bool innerBranch = false, lifted = false, unselected = true, reachedTarg = false;
-double leeway = 15;
+struct Goal selected=init;
+bool innerBranch = false, lifted = false, unselected = true, tiltAtInit = false;
+double leeway = 12.5;
 double armTarg = init.armHeight, armKP = 0.2;
 double tiltTarg = init.tiltHeight, tiltKP = 0.2;
 bool tiltClampState = LOW, armClampState = LOW, canisterState = LOW;
@@ -66,6 +64,7 @@ void tiltControl(void*ignore) {
     printf("Target: %f, Potentiometer: %d, Error: %f\n", tiltTarg, tiltPotentiometer.get_value(), tiltError);
     tiltLeft.set_value(tiltClampState);
     tiltRight.set_value(tiltClampState);
+    if (tiltTarg == init.tiltHeight)fabs(tiltError) <= leeway ? tiltClampState = false : tiltClampState = true;
     delay(2);
   }
 }
@@ -75,9 +74,11 @@ void setTiltHeight(double height) {tiltTarg = height;}
 void tallSelected(){
   if(!lifted){selected = tall; unselected = false;}
 }
+
 void neutralSelected(){
   if(!lifted){selected = neutral; unselected = false;}
 }
+
 void allianceSelected(){
   if(!lifted){selected = alliance; unselected = false;}
 }
