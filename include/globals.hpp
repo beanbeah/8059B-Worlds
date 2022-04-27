@@ -2,27 +2,24 @@
 #define _GLOBALS_HPP_
 
 // Motor ports
-#define FLUPort 15
-#define FLDPort 14
-#define FRUPort 12
-#define FRDPort 11
-#define Differential 13
+#define FL1Port 19
+#define FL2Port 20
+#define FL3Port 10
+
+#define FR1Port 11
+#define FR2Port 12
+#define FR3Port 1
+
 
 // Mech Ports
-#define armLeftPort 20
-#define armRightPort 19
-#define tiltPort 16
+#define armLeftPort 2
+#define armRightPort 3
 
 // Pneumatic Ports
-#define canisterLeftPort 3
-#define canisterRightPort 1
 #define clampPort 2
-#define tiltLeftPort 7
-#define tiltRightPort 6
 
 // Sensor ports
 #define armPotentiometerPort 4
-#define tiltPotentiometerPort 8
 
 //smart Ports
 #define encdSPort 18

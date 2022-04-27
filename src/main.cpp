@@ -8,29 +8,22 @@
  */
 void initialize() {
 	//base Blue
-	Motor FLU(FLUPort,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
-	Motor FLD(FLDPort,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
-	Motor FRU(FRUPort,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
-	Motor FRD(FRDPort,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
-	Motor DF(Differential,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
+	Motor FL1(FL1Port,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
+	Motor FL2(FL2Port,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
+	Motor FL3(FL3Port,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
+	Motor FR1(FR1Port,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
+	Motor FR2(FR2Port,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
+	Motor FR3(FR3Port,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
 
 	//Lift green
 	Motor armLeft(armLeftPort,E_MOTOR_GEARSET_18,true,E_MOTOR_ENCODER_DEGREES);
 	Motor armRight(armRightPort,E_MOTOR_GEARSET_18,false,E_MOTOR_ENCODER_DEGREES);
 
-	//tipper red
-	Motor tilt(tiltPort,E_MOTOR_GEARSET_36,true,E_MOTOR_ENCODER_DEGREES);
-
 	//penumatic init
-	ADIDigitalOut canisterL(canisterLeftPort);
-	ADIDigitalOut canisterR(canisterRightPort);
 	ADIDigitalOut clamp(clampPort);
-	ADIDigitalOut tiltLeft(tiltLeftPort);
-	ADIDigitalOut tiltRight(tiltRightPort);
 
 	//sensor init
 	ADIAnalogIn armPotentiometer(armPotentiometerPort);
-	ADIAnalogIn tiltPotentiometer(tiltPotentiometerPort);
 	Rotation encoderR(encdRPort);
 	Rotation encoderS(encdSPort);
 	encoderR.reset_position();
@@ -40,8 +33,6 @@ void initialize() {
 	Task sensorTask(sensors, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Sensor Task");
 	Task debugTask(Debug, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
 	Task armControlTask(armControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Arm Control Task");
-	Task tiltControlTask(tiltControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Tilt Control Task");
-	Task canisterControlTask(canisterControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Canister Control Task");
 
 	//temp enable odom/pp task
 	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
@@ -97,30 +88,27 @@ void autonomous() {
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	Motor FLU(FLUPort);
-	Motor FLD(FLDPort);
-	Motor FRU(FRUPort);
-	Motor FRD(FRDPort);
-	Motor DF(Differential);
+	Motor FL1(FL1Port);
+  Motor FL2(FL2Port);
+  Motor FL3(FL3Port);
+  Motor FR1(FR1Port);
+  Motor FR2(FR2Port);
+  Motor FR3(FR3Port);
 	Motor armLeft(armLeftPort);
 	Motor armRight(armRightPort);
-	Motor tilt(tiltPort);
 
-	ADIDigitalOut canisterL(canisterLeftPort);
-	ADIDigitalOut canisterR(canisterRightPort);
 	ADIDigitalOut clamp(clampPort);
-	ADIDigitalOut tiltLeft(tiltLeftPort);
-	ADIDigitalOut tiltRight(tiltRightPort);
 
-	FLU.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	FLD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	FRU.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	FRD.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
-	DF.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FL1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FL2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FL3.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FR1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FR2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
+	FR3.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 
 
 	Controller master(E_CONTROLLER_MASTER);
-
+	int armPos = 0, tiltPos = 0;
 	bool tankDrive = true;
 	while(true) {
 		double left, right;
@@ -136,22 +124,17 @@ void opcontrol() {
 			right = power - turn;
 		}
 
-		int avg = (left + right)/2;
-		FLU.move(left);
-		FLD.move(left);
-		FRU.move(right);
-		FRD.move(right);
-		DF.move(avg);
+		FL1.move(left);
+		FL2.move(left);
+		FL3.move(left);
+		FR1.move(right);
+		FR2.move(right);
+		FR3.move(right);
 
-		if(master.get_digital_new_press(DIGITAL_X))	tallSelected();
-		if(master.get_digital_new_press(DIGITAL_A))	neutralSelected();
-		if(master.get_digital_new_press(DIGITAL_B)) allianceSelected();
+		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 2) driverArmPos(++armPos);
+		else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
 
-		if(master.get_digital_new_press(DIGITAL_L1)) toggleInnerBranch();
-		if(master.get_digital_new_press(DIGITAL_L2)) reset();
-
-		if(master.get_digital_new_press(DIGITAL_R1)) toggleCanisterState();
-		if(master.get_digital_new_press(DIGITAL_R2)) toggleArmClampState();
+		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
 
 		posPrintMaster();
 

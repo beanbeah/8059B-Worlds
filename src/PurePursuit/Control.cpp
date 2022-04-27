@@ -19,17 +19,18 @@ double targBearing = 0;
 bool enableL = false, enableR = false;
 
 void drive(double l, double r){
-  Motor FLU(FLUPort);
-  Motor FLD(FLDPort);
-  Motor FRU(FRUPort);
-  Motor FRD(FRDPort);
-  Motor DF(Differential);
-  int avg = (l + r)/2;
-  FLU.move(l);
-  FLD.move(l);
-  FRD.move(r);
-  FRD.move(r);
-  DF.move(avg);
+  Motor FL1(FL1Port);
+  Motor FL2(FL2Port);
+  Motor FL3(FL3Port);
+  Motor FR1(FR1Port);
+  Motor FR2(FR2Port);
+  Motor FR3(FR3Port);
+  FL1.move(l);
+  FL2.move(l);
+  FL3.move(l);
+  FR1.move(r);
+  FR2.move(r);
+  FR3.move(r);
 }
 
 void resetPP() {
