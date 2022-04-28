@@ -21,6 +21,8 @@ void initialize() {
 
 	//penumatic init
 	ADIDigitalOut clamp(clampPort);
+	ADIDigitalOut batch(batchPort);
+	ADIDigitalOut needle(needlePort);
 
 	//sensor init
 	ADIAnalogIn armPotentiometer(armPotentiometerPort);
@@ -98,6 +100,8 @@ void opcontrol() {
 	Motor armRight(armRightPort);
 
 	ADIDigitalOut clamp(clampPort);
+	ADIDigitalOut batch(batchPort);
+	ADIDigitalOut needle(needlePort);
 
 	FL1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 	FL2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
@@ -131,10 +135,11 @@ void opcontrol() {
 		FR2.move(right);
 		FR3.move(right);
 
-		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 2) driverArmPos(++armPos);
+		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 3) driverArmPos(++armPos);
 		else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
 
-		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
+		if(master.get_digital_new_press(DIGITAL_R2)) toggleArmClampState();
+		if(master.get_digital_new_press(DIGITAL_R1)) toggleBatchState();
 
 		posPrintMaster();
 

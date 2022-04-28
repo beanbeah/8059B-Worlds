@@ -7,5 +7,7 @@ void setArmPos(int pos);
 void driverArmPos(int pos);
 void setArmClampState(bool state);
 void toggleArmClampState();
+void setBatchState(bool state);
+void toggleBatchState();
 
 #endif

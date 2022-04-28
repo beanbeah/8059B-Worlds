@@ -12,14 +12,16 @@
 
 
 // Mech Ports
-#define armLeftPort 2
-#define armRightPort 3
+#define armLeftPort 3
+#define armRightPort 2
 
 // Pneumatic Ports
 #define clampPort 2
+#define batchPort 1
+#define needlePort 4
 
 // Sensor ports
-#define armPotentiometerPort 4
+#define armPotentiometerPort 3
 
 //smart Ports
 #define encdSPort 18
