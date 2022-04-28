@@ -17,11 +17,11 @@
 
 // Pneumatic Ports
 #define clampPort 2
-#define batchPort 1
-#define needlePort 4
+#define batchPort 3
+#define needlePort 1
 
 // Sensor ports
-#define armPotentiometerPort 3
+#define armPotentiometerPort 4
 
 //smart Ports
 #define encdSPort 18

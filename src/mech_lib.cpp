@@ -1,9 +1,9 @@
 #include "main.h"
 
-const double armHeights[] = {2390,2745,3000,3675};
-const double progArmHeights[] = {2390,2745,3000,3675};
+const double armHeights[] = {1340,1650,1920,2555};
+const double progArmHeights[] = {1340,1650,1920,2555};
+double armHighestKP = 0.25, armKP = 1, armDownKP = 0.05, armKD = 0.15;
 double armTarg = armHeights[0], prevArmError=0;
-double armKP = 0.20, armDownKP = 0.18, armKD = 0;
 double leeway = 15;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true;
 
@@ -20,19 +20,21 @@ void armControl(void*ignore) {
   while(true) {
     double armError = armTarg - armPotentiometer.get_value();
     double deltaError = armError - prevArmError;
-    double armPower = (armError > 0 ? armError * armKP: armError * armDownKP) + deltaError * armKD;
+    double kp;
+    if (armError > 0)(armTarg == armHeights[3]) ? kp = armHighestKP : kp = armKP;
+    else kp = armDownKP;
+    double armPower = armError * kp + deltaError * armKD;
     armLeft.move(armPower);
     armRight.move(armPower);
-    printf("Target: %f, Potentiometer: %d, Error: %f\n", armTarg, armPotentiometer.get_value(), armError);
-    //clamp.set_value(armClampState);
+    printf("Target: %f, Potentiometer: %d, Error: %f, armKP: %f\n", armTarg, armPotentiometer.get_value(), armError, kp);
+    clamp.set_value(armClampState);
     if (!set){
       if (armError> 0 && !needleState)needleState=true;
       else if (armTarg == armHeights[0] && needleState)needleState=false;
       set = true;
     }
-
     needle.set_value(needleState);
-  //  batch.set_value(batchState);
+    batch.set_value(batchState);
     delay(2);
   }
 
