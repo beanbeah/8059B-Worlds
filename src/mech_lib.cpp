@@ -1,6 +1,6 @@
 #include "main.h"
 
-const double armHeights[] = {1320,1700,1970,2660};
+const double armHeights[] = {1320,1700,1975,2660};
 const double goalHeights[] = {1320,2005,2220};
 const double progArmHeights[] = {};
 double armKP = 0.35, goalKP = 0.8, armDownKP = 0.18, armKD = 0.1, armTarg = armHeights[0], prevArmError=0;
@@ -31,9 +31,13 @@ void armControl(void*ignore) {
     printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
 
     if (!set){
-      if (armError> 0 && !needleState)needleState=true;
+      if (armError> 0 && !needleState){
+        needleState=true;
+        batchState = true;
+      }
       else if (armTarg == armHeights[0] && needleState){
         needleState=false;
+        batchState = false;
         armClampState=false;
       }
       set = true;

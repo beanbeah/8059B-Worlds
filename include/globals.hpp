@@ -2,13 +2,14 @@
 #define _GLOBALS_HPP_
 
 // Motor ports
-#define FL1Port 19
-#define FL2Port 20
-#define FL3Port 10
+#define FR1Port 19
+#define FR2Port 20
+#define FR3Port 10
 
-#define FR1Port 11
-#define FR2Port 12
-#define FR3Port 1
+#define FL1Port 11
+#define FL2Port 12
+#define FL3Port 1
+
 
 
 // Mech Ports
