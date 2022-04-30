@@ -1,8 +1,9 @@
 #include "main.h"
 
 const double armHeights[] = {1320,1700,1970,2660};
+const double goalHeights[] = {1320,2005,2220};
 const double progArmHeights[] = {};
-double armKP = 0.35, armDownKP = 0.18, armKD = 0.1, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.35, goalKP = 0.8, armDownKP = 0.18, armKD = 0.1, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true;
 
 void armControl(void*ignore) {
@@ -18,7 +19,11 @@ void armControl(void*ignore) {
   while(true) {
     double armError = armTarg - armPotentiometer.get_value();
     double deltaError = armError - prevArmError;
-    double armPower = (armError>0?armError*armKP : armError*armDownKP - 10) + deltaError * armKD ;
+    double armPower;
+
+    if (armClampState) armPower = (armError>0?armError*goalKP : armError*armDownKP - 10) + deltaError * armKD;
+    else armPower = (armError>0?armError*armKP : armError*armDownKP - 10) + deltaError * armKD ;
+
     armPower = fmax(armPower, -200); //limit downward power
     armLeft.move(armPower);
     armRight.move(armPower);
@@ -45,12 +50,12 @@ void armControl(void*ignore) {
 void setArmHeight(double height) {armTarg = height;}
 
 void driverArmPos(int pos) {
-  armTarg = armHeights[pos];
+  armClampState ? armTarg = goalHeights[pos] : armTarg = armHeights[pos];
   set = false;
 }
 
 void setArmPos(int pos) {
-  armTarg = progArmHeights[pos];
+  armClampState ? armTarg = goalHeights[pos] : armTarg = armHeights[pos];
   set = false;
 }
 

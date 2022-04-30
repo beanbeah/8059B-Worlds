@@ -11,4 +11,6 @@ void setBatchState(bool state);
 void toggleBatchState();
 void setNeedleState(bool state);
 void toggleNeedleState();
+
+extern bool armClampState, needleState, batchState;
 #endif
