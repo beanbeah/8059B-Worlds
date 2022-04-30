@@ -138,8 +138,10 @@ void opcontrol() {
 		if(master.get_digital_new_press(DIGITAL_L1) && armPos < 3) driverArmPos(++armPos);
 		else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
 
-		if(master.get_digital_new_press(DIGITAL_R2)) toggleArmClampState();
-		if(master.get_digital_new_press(DIGITAL_R1)) toggleBatchState();
+		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
+		if(master.get_digital_new_press(DIGITAL_R1)) toggleNeedleState();
+		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
+
 
 		posPrintMaster();
 

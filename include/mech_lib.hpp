@@ -9,5 +9,6 @@ void setArmClampState(bool state);
 void toggleArmClampState();
 void setBatchState(bool state);
 void toggleBatchState();
-
+void setNeedleState(bool state);
+void toggleNeedleState();
 #endif

@@ -1,10 +1,8 @@
 #include "main.h"
 
-const double armHeights[] = {1340,1650,1920,2555};
-const double progArmHeights[] = {1340,1650,1920,2555};
-double armHighestKP = 0.25, armKP = 1, armDownKP = 0.05, armKD = 0.15;
-double armTarg = armHeights[0], prevArmError=0;
-double leeway = 15;
+const double armHeights[] = {1320,1700,1970,2660};
+const double progArmHeights[] = {};
+double armKP = 0.35, armDownKP = 0.18, armKD = 0.1, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true;
 
 void armControl(void*ignore) {
@@ -20,21 +18,25 @@ void armControl(void*ignore) {
   while(true) {
     double armError = armTarg - armPotentiometer.get_value();
     double deltaError = armError - prevArmError;
-    double kp;
-    if (armError > 0)(armTarg == armHeights[3]) ? kp = armHighestKP : kp = armKP;
-    else kp = armDownKP;
-    double armPower = armError * kp + deltaError * armKD;
+    double armPower = (armError>0?armError*armKP : armError*armDownKP - 10) + deltaError * armKD ;
+    armPower = fmax(armPower, -200); //limit downward power
     armLeft.move(armPower);
     armRight.move(armPower);
-    printf("Target: %f, Potentiometer: %d, Error: %f, armKP: %f\n", armTarg, armPotentiometer.get_value(), armError, kp);
-    clamp.set_value(armClampState);
+    prevArmError = armError;
+    printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
+
     if (!set){
       if (armError> 0 && !needleState)needleState=true;
-      else if (armTarg == armHeights[0] && needleState)needleState=false;
+      else if (armTarg == armHeights[0] && needleState){
+        needleState=false;
+        armClampState=false;
+      }
       set = true;
     }
     needle.set_value(needleState);
     batch.set_value(batchState);
+    clamp.set_value(armClampState);
+
     delay(2);
   }
 
@@ -66,4 +68,11 @@ void setBatchState(bool state) {
 
 void toggleBatchState() {
   batchState = !batchState;
+}
+
+void setNeedleState(bool state) {
+  needleState = state;
+}
+void toggleNeedleState() {
+  needleState = !needleState;
 }
