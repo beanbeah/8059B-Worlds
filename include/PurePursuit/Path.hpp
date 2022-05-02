@@ -2,7 +2,7 @@
 #define _PATH_HPP_
 #include "Node.hpp"
 #include <vector>
-#define inPerDeg 0.0240091045675568 //use baseOdom to tune
+#define inPerDeg 0.024099477608589007 //use baseOdom to tune
 
 // Motor 600 RPM
 // Gear Ratio 3:5
