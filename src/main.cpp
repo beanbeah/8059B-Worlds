@@ -112,6 +112,8 @@ void opcontrol() {
 
 
 	Controller master(E_CONTROLLER_MASTER);
+	Controller partner(E_CONTROLLER_PARTNER);
+
 	int armPos = 0, tiltPos = 0;
 	bool tankDrive = true;
 	while(true) {
@@ -151,6 +153,7 @@ void opcontrol() {
 		if(master.get_digital_new_press(DIGITAL_R1)) toggleNeedleState();
 		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
 
+		if(partner.get_digital_new_press(DIGITAL_X)) toggleArmManual();
 
 		posPrintMaster();
 

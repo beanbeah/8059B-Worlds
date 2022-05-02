@@ -19,7 +19,7 @@ void sensors(void * ignore){
    bool calibrated = false;
    int start = millis();
    while(true){
-     encdR = encoderR.get_position()/100*inPerDeg; //centidegree /100 = degree
+     encdR = encoderR.get_position()/100*inPerDeg; // centidegree / 100 = degree
      encdS = encoderS.get_position()/100*inPerDeg;
      bearing = imu.is_calibrating()? 0 : (imu.get_rotation()*toRad + offset*toRad);
      angle = boundRad(halfPI - bearing);

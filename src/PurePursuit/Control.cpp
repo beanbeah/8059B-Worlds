@@ -16,21 +16,22 @@ int closestPointIndex = 0;
 double lastFracIndex = 0;
 double targBearing = 0;
 
-bool enableL = false, enableR = false;
+bool enableL = true, enableR = true;
 
 void drive(double l, double r){
+  //account for orientation switching of robot, where lift faces forward of robot.
   Motor FL1(FL1Port);
   Motor FL2(FL2Port);
   Motor FL3(FL3Port);
   Motor FR1(FR1Port);
   Motor FR2(FR2Port);
   Motor FR3(FR3Port);
-  FL1.move(l);
-  FL2.move(l);
-  FL3.move(l);
-  FR1.move(r);
-  FR2.move(r);
-  FR3.move(r);
+  FL1.move(-r);
+  FL2.move(-r);
+  FL3.move(-r);
+  FR1.move(-l);
+  FR2.move(-l);
+  FR3.move(-l);
 }
 
 void resetPP() {
@@ -73,6 +74,7 @@ double calcBaseTurn(double x, double y, bool rev) {
 
 void waitTurn(double cutoff) {
   double start = millis();
+  //change 5 to 3???
   while((fabs(targBearing - bearing)*toDeg > TURN_LEEWAY || fabs(measuredVL*inPerMsToRPM) > 5 || fabs(measuredVR*inPerMsToRPM) > 5) && millis() - start < cutoff) delay(5);
   printf("I stopped :)\n\n");
 }
@@ -192,6 +194,9 @@ void PPControl(void * ignore){
       */
       double targVClosest = reverse ? -path.getTargV(closestPointIndex) : path.getTargV(closestPointIndex);
       // rate limiter
+      //double deltaV = targVClosest - targV;
+      //bool isAccel = fabs(targVClosest) > fabs(targV);
+      //targV = isAccel ? targV + abscap(deltaV, maxRamp) : targVClosest;
       targV = targVClosest;
       // targV = targV + abscap(targVClosest, globalMaxA); //might use v + abscap instead of targV + abscap?
       // if(count % 10 == 0) printf("TargV: %.5f, MAXV: %.5f\n", targV, globalMaxV);

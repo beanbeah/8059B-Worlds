@@ -23,10 +23,11 @@
 
 // Sensor ports
 #define armPotentiometerPort 4
+#define armLimitPort 5
 
 //smart Ports
-#define encdSPort 18
-#define encdRPort 17
+#define encdSPort 15
+#define encdRPort 16
 #define imuPort 21
 
 #endif
