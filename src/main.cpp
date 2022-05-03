@@ -16,8 +16,8 @@ void initialize() {
 	Motor FR3(FR3Port,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
 
 	//Lift green
-	Motor armLeft(armLeftPort,E_MOTOR_GEARSET_18,true,E_MOTOR_ENCODER_DEGREES);
-	Motor armRight(armRightPort,E_MOTOR_GEARSET_18,false,E_MOTOR_ENCODER_DEGREES);
+	Motor armLeft(armLeftPort,E_MOTOR_GEARSET_36,true,E_MOTOR_ENCODER_DEGREES);
+	Motor armRight(armRightPort,E_MOTOR_GEARSET_36,false,E_MOTOR_ENCODER_DEGREES);
 
 	//penumatic init
 	ADIDigitalOut clamp(clampPort);
@@ -121,8 +121,9 @@ void opcontrol() {
 	Controller master(E_CONTROLLER_MASTER);
 	Controller partner(E_CONTROLLER_PARTNER);
 
-	int armPos = 0, tiltPos = 0;
-	bool tankDrive = true;
+	int armPos = 0, goalPos = 0, tiltPos = 0;
+	bool tankDrive = true, init = true;
+	int tick = 0;
 	while(true) {
 		double left, right;
 		if(master.get_digital_new_press(DIGITAL_Y)) tankDrive = !tankDrive;
@@ -145,18 +146,22 @@ void opcontrol() {
 		FR3.move(right);
 
 		if (armClampState){
-			if (master.get_digital_new_press(DIGITAL_L1) && armPos < 3){
-				if (armPos == 1) armPos = 3;
-				else ++armPos;
+			if(init)master.rumble("...");
+			if (master.get_digital_new_press(DIGITAL_L1) && goalPos < 3){
+				if (goalPos == 1) goalPos = 3;
+				else ++goalPos;
 			}
-			else if (master.get_digital_new_press(DIGITAL_L2) && armPos > 0) {
-				if (armPos == 2) armPos = 0;
-				else --armPos;
-			}
-			driverArmPos(armPos);
+			else if (master.get_digital_new_press(DIGITAL_L2) && goalPos > 0)--goalPos;
+			if(tick%500==0)master.rumble("...");
+			driverArmPos(goalPos);
 		} else {
+			init = false;
 			if(master.get_digital_new_press(DIGITAL_L1) && armPos < 3) driverArmPos(++armPos);
-			else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
+			else if(master.get_digital_new_press(DIGITAL_L2)){
+				if (armPos > 0) --armPos;
+				if (goalPos == 2)goalPos = 0, armPos = 0;
+				driverArmPos(armPos);
+			}
 		}
 
 		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
@@ -164,9 +169,10 @@ void opcontrol() {
 		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
 
 		if(partner.get_digital_new_press(DIGITAL_X)) toggleArmManual();
+		if(partner.get_digital_new_press(DIGITAL_R1)) toggleArmClampState();
 
 		posPrintMaster();
-
+		tick++;
 		delay(5);
   	}
 }

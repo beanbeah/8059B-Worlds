@@ -1,9 +1,9 @@
 #include "main.h"
 
-const double armHeights[] = {1315,1675,1955,2640};
+const double armHeights[] = {1315,1670,1930,2630};
 const double goalHeights[] = {1315,1475,1920,2115};
 const double progArmHeights[] = {};
-double armKP = 0.4, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.39, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.01, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
 int count = 0;
 
@@ -13,7 +13,7 @@ kP: 0.38 - 0.42 least oscillation
 kD: 0.08 - 0.12
 kI: 0.01 - 0.02
 
-downKP: 0.3-0.4
+downKP: 0.3 - 0.4
 goalKP: 0.8 - 1.0
 
 magic constants:
@@ -36,7 +36,7 @@ void armControl(void*ignore) {
     double armError = armTarg - armPotentiometer.get_value();
     double deltaError = armError - prevArmError;
     double integral = integral + armError;
-    if (fabs(armError) <= 10 || fabs(armError) >= 20)integral=0;
+    if (fabs(armError) <= 12 || fabs(armError) >= 20)integral=0;
     double armPower;
 
     //PID
@@ -48,7 +48,7 @@ void armControl(void*ignore) {
       // rate Limiting/magic constants
       if (armTarg == armHeights[0]) armPower = rateLimit(armPower,-100);
       //if (armTarg == armHeights[1]) armPower += 10;
-      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,90);
+      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,100);
     }
 
     armLeft.move(armPower);
