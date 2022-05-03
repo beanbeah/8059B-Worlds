@@ -1,9 +1,9 @@
 #include "main.h"
 
-const double armHeights[] = {1315,1645,1920,2570};
+const double armHeights[] = {1315,1675,1955,2640};
 const double goalHeights[] = {1315,1920,2115};
 const double progArmHeights[] = {};
-double armKP = 0.4, goalKP = 0.9, armDownKP = 0.35, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.4, goalKP = 0.9, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
 int count = 0;
 
@@ -13,6 +13,7 @@ kP: 0.38 - 0.42 least oscillation
 kD: 0.08 - 0.12
 kI: 0.01 - 0.02
 
+downKP: 0.3-0.4
 goalKP: 0.8 - 1.0
 
 magic constants:
@@ -40,7 +41,7 @@ void armControl(void*ignore) {
     double armPower;
 
     //PID
-    if (armClampState) armPower = (armError>0?armError*goalKP + 5: armError*armDownKP - 20) + deltaError * armKD + armKI * integral;
+    if (armClampState) armPower = (armError>0?armError*goalKP + 5: armError*armDownKP - 18) + deltaError * armKD + armKI * integral;
     else armPower = (armError>0?armError*armKP : armError*armDownKP - 10) + deltaError * armKD + armKI * integral;
 
     if (armManual) armPower = partner.get_analog(ANALOG_RIGHT_Y);
@@ -48,7 +49,7 @@ void armControl(void*ignore) {
       // rate Limiting/magic constants
       if (armTarg == armHeights[0]) armPower = rateLimit(armPower,-100);
       //if (armTarg == armHeights[1]) armPower += 10;
-      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,80);
+      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,90);
     }
 
     armLeft.move(armPower);
