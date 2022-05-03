@@ -54,7 +54,7 @@ void armControl(void*ignore) {
     armLeft.move(armPower);
     armRight.move(armPower);
     prevArmError = armError;
-    if (count%10==0) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
+    //if (count%10==0) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
     //if (count%10==0) printf("Left Motor Temp: %f, Right Motor Temp: %f\n", armLeft.get_temperature(), armRight.get_temperature());
 
     //setting pneumatics
@@ -64,16 +64,10 @@ void armControl(void*ignore) {
         count = 0;
         toDelay = true;
       }
-      else if (armTarg == armHeights[0] && needleState){
-        batchState = false;
-        armClampState=false;
-        count = 0;
-        toDelay = true;
-      }
       set = true;
     }
     if (count == 10 && toDelay){
-      batchState ? needleState = true: needleState = false;
+      needleState = true;
       toDelay = false;
     }
     if (armLimit.get_new_press())armClampState=true;

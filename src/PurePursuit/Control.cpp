@@ -1,8 +1,8 @@
 #include "main.h"
-#define kV 1375
+#define kV 1373
 #define kA 140500
 #define kP 1000
-#define DEFAULT_TURN_KP 0.122
+#define DEFAULT_TURN_KP 0.125 //tuned to +/- 1 deg
 // #define kA 50000
 // #define kP 1000
 
@@ -193,10 +193,6 @@ void PPControl(void * ignore){
       * constantly feed this value through the rate limiter to get the acceleration-limited target velocity.
       */
       double targVClosest = reverse ? -path.getTargV(closestPointIndex) : path.getTargV(closestPointIndex);
-      // rate limiter
-      //double deltaV = targVClosest - targV;
-      //bool isAccel = fabs(targVClosest) > fabs(targV);
-      //targV = isAccel ? targV + abscap(deltaV, maxRamp) : targVClosest;
       targV = targVClosest;
       // targV = targV + abscap(targVClosest, globalMaxA); //might use v + abscap instead of targV + abscap?
       // if(count % 10 == 0) printf("TargV: %.5f, MAXV: %.5f\n", targV, globalMaxV);

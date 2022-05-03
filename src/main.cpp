@@ -36,7 +36,6 @@ void initialize() {
 	// Mech tasks
 	Task sensorTask(sensors, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Sensor Task");
 	Task armControlTask(armControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Arm Control Task");
-	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
 }
 
 /**
@@ -69,15 +68,34 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
-	//temp enable odom/pp task
-	Task debugTask(Debug, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
+	double start = millis();
+	setOffset(-90);
+	baseTurn(-90);
+	delay(50);
 	Task controlTask(PPControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "PP Task");
-	delay(1000);
+	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
+
+	//get AWP
 	enableBase(true,true);
-	setMaxRPMV(500);
-	double smooth = 0.75;
-	basePP({position,Node(100,0)},1-smooth,smooth,20);
-	waitPP(5000);
+	delay(250);
+	baseMove(-20);
+	waitPP(1000);
+	baseMove(12);
+	waitPP(1000);
+	baseTurn(calcBaseTurn(30.5, 26, false));
+	waitTurn(1200);
+	driverArmPos(1);
+	baseMove(10);
+	waitPP(1000);
+	delay(150);
+	setBatchState(false);
+	delay(1000);
+	setNeedleState(false);
+	delay(300);
+	baseMove(11.7);
+	waitPP(1000);
+	printf("Ended in %.2f seconds\n", (millis()-start)/1000);
+
 
 
 

@@ -26,8 +26,8 @@
 #define armLimitPort 5
 
 //smart Ports
-#define encdSPort 15
-#define encdRPort 16
+#define encdSPort 16
+#define encdRPort 15
 #define imuPort 21
 
 #endif
