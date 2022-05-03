@@ -28,18 +28,15 @@ void initialize() {
 	ADIAnalogIn armPotentiometer(armPotentiometerPort);
 	Rotation encoderR(encdRPort);
 	Rotation encoderS(encdSPort);
+	Imu imu(imuPort);
 	encoderR.reset_position();
 	encoderS.reset_position();
+	imu.reset();
 
 	// Mech tasks
 	Task sensorTask(sensors, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Sensor Task");
-	Task debugTask(Debug, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
 	Task armControlTask(armControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Arm Control Task");
-
-	//temp enable odom/pp task
 	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
-	Task controlTask(PPControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "PP Task");
-
 }
 
 /**
@@ -72,6 +69,16 @@ void competition_initialize() {}
  * from where it left off.
  */
 void autonomous() {
+	//temp enable odom/pp task
+	Task debugTask(Debug, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
+	Task controlTask(PPControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "PP Task");
+	delay(1000);
+	enableBase(true,true);
+	setMaxRPMV(500);
+	double smooth = 0.75;
+	basePP({position,Node(100,0)},1-smooth,smooth,20);
+	waitPP(5000);
+
 
 
 }
@@ -138,12 +145,15 @@ void opcontrol() {
 		FR3.move(right);
 
 		if (armClampState){
-			if (master.get_digital_new_press(DIGITAL_L1) && armPos == 0){
-				armPos = 2;
-				driverArmPos(armPos);
+			if (master.get_digital_new_press(DIGITAL_L1) && armPos < 3){
+				if (armPos == 1) armPos = 3;
+				else ++armPos;
 			}
-			else if (master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);
-
+			else if (master.get_digital_new_press(DIGITAL_L2) && armPos > 0) {
+				if (armPos == 2) armPos = 0;
+				else --armPos;
+			}
+			driverArmPos(armPos);
 		} else {
 			if(master.get_digital_new_press(DIGITAL_L1) && armPos < 3) driverArmPos(++armPos);
 			else if(master.get_digital_new_press(DIGITAL_L2) && armPos > 0) driverArmPos(--armPos);

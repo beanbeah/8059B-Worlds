@@ -16,7 +16,6 @@ void sensors(void * ignore){
    Imu imu(imuPort);
    Rotation encoderR(encdRPort);
    Rotation encoderS(encdSPort);
-   bool calibrated = false;
    int start = millis();
    while(true){
      encdR = encoderR.get_position()/100*inPerDeg; // centidegree / 100 = degree

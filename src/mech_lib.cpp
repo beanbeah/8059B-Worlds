@@ -1,9 +1,9 @@
 #include "main.h"
 
 const double armHeights[] = {1315,1675,1955,2640};
-const double goalHeights[] = {1315,1920,2115};
+const double goalHeights[] = {1315,1475,1920,2115};
 const double progArmHeights[] = {};
-double armKP = 0.4, goalKP = 0.9, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.4, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
 int count = 0;
 
@@ -17,8 +17,7 @@ downKP: 0.3-0.4
 goalKP: 0.8 - 1.0
 
 magic constants:
-up: 0 - 5
-down: 12 - 20
+down: -10
 **/
 
 void armControl(void*ignore) {
@@ -41,7 +40,7 @@ void armControl(void*ignore) {
     double armPower;
 
     //PID
-    if (armClampState) armPower = (armError>0?armError*goalKP + 5: armError*armDownKP - 18) + deltaError * armKD + armKI * integral;
+    if (armClampState) armPower = (armError>0?armError*goalKP : armError*armDownKP) + deltaError * armKD;
     else armPower = (armError>0?armError*armKP : armError*armDownKP - 10) + deltaError * armKD + armKI * integral;
 
     if (armManual) armPower = partner.get_analog(ANALOG_RIGHT_Y);
@@ -59,7 +58,7 @@ void armControl(void*ignore) {
     //if (count%10==0) printf("Left Motor Temp: %f, Right Motor Temp: %f\n", armLeft.get_temperature(), armRight.get_temperature());
 
     //setting pneumatics
-    if (!set){
+    if (!set && !armClampState){
       if (armError> 0 && !needleState){
         batchState = true;
         count = 0;
