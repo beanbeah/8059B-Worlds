@@ -4,8 +4,8 @@
 void armControl(void*ignore);
 void setArmHeight(double height);
 void setArmPos(int pos);
-void driverArmPos(int pos);
-void toggleArmManual();
+void driverArmUp();
+void driverArmDown();
 void setArmClampState(bool state);
 void toggleArmClampState();
 void setBatchState(bool state);
@@ -14,6 +14,6 @@ void setNeedleState(bool state);
 void toggleNeedleState();
 double rateLimit(double input, double limit);
 void toSet(bool state);
-
-extern bool armClampState, needleState, batchState;
+int findPosition(const double arr[], int n, double k);
+extern bool armClampState, needleState, batchState,armManual;
 #endif

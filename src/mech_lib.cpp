@@ -1,19 +1,15 @@
 #include "main.h"
 
-const double armHeights[] = {1315,1680,1950,2615};
+const double armHeights[] = {1315,1670,1930,2615};
 const double goalHeights[] = {1315,1475,1920,2115};
 const double progArmHeights[] = {};
-double armKP = 0.6, goalKP = 0.85, armDownKP = 0.3, armKD = 0.01, armKI = 0.01, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.40, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
 int count = 0;
 
 /**
-4/5/2022:
-* Rubber Bands Changed
-* armKP, armKD changed.
-
 Notes for tuning (since latex degrades over time)
-kP: 0.6-0.7
+kP: 0.38 - 0.42 least oscillation
 kD: 0.08 - 0.12
 kI: 0.01 - 0.02
 
@@ -32,7 +28,10 @@ void armControl(void*ignore) {
   ADIDigitalOut needle(needlePort);
   ADIAnalogIn armPotentiometer(armPotentiometerPort);
   ADIDigitalIn armLimit(armLimitPort);
+
   Controller partner(E_CONTROLLER_PARTNER);
+  bool init = true;
+  int tick = 0;
 
   while(true) {
     double armError = armTarg - armPotentiometer.get_value();
@@ -45,19 +44,24 @@ void armControl(void*ignore) {
     if (armClampState) armPower = (armError>0?armError*goalKP : armError*armDownKP) + deltaError * armKD;
     else armPower = (armError>0?armError*armKP : armError*armDownKP) + deltaError * armKD + armKI * integral;
 
-    if (armManual) armPower = partner.get_analog(ANALOG_RIGHT_Y);
+
+    if (partner.get_digital_new_press(DIGITAL_X)) armManual = !armManual;
+    if (armManual){
+      armPower = partner.get_analog(ANALOG_RIGHT_Y) * 0.5;
+      armTarg = armPotentiometer.get_value();
+    }
     else {
       // rate Limiting/magic constants
       if (armTarg == armHeights[0]) armPower = rateLimit(armPower,-100);
       //if (armTarg == armHeights[1]) armPower += 10;
-      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,120);
+      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,100);
       if (fabs(armError) <= 8) armPower = armPower / 2; //aim to reduce oscillation.
     }
 
     armLeft.move(armPower);
     armRight.move(armPower);
     prevArmError = armError;
-    if (count%10==0) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
+    if (count%10==0 && !armManual) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
     //if (count%10==0) printf("Left Motor Temp: %f, Right Motor Temp: %f\n", armLeft.get_temperature(), armRight.get_temperature());
 
     //setting pneumatics
@@ -75,7 +79,6 @@ void armControl(void*ignore) {
     }
     if (armLimit.get_new_press())armClampState=true;
     count++;
-
     batch.set_value(batchState);
     clamp.set_value(armClampState);
     needle.set_value(needleState);
@@ -86,20 +89,46 @@ void armControl(void*ignore) {
 
 void setArmHeight(double height) {armTarg = height;}
 
-void driverArmPos(int pos) {
-  armClampState ? armTarg = goalHeights[pos] : armTarg = armHeights[pos];
+int findPosition(const double arr[], int n, double k){
+  int index;
+  for (int i = 0; i<n; i++){
+    if (k == arr[i])index = i;
+    else if (k >= arr[i])index = i;
+  }
+  return index;
+}
+
+void driverArmUp() {
+  int goalPosition = findPosition(goalHeights,4,armTarg);
+  int armPosition = findPosition(armHeights,4,armTarg);
+
+  if (armClampState){
+    if (goalPosition == 1)setArmPos(3);
+    else setArmPos(++goalPosition);
+  } else setArmPos(++armPosition);
   set = false;
+}
+
+void driverArmDown() {
+  bool toSet;
+  int goalPosition = findPosition(goalHeights,4,armTarg);
+  int armPosition = findPosition(armHeights,4,armTarg);
+
+  if (armClampState) setArmPos(--goalPosition);
+  else {
+    if (goalPosition == 2){
+      toSet = false;
+      setArmPos(0);
+    } else setArmPos(--armPosition);
+  }
+
+  if (!toSet)set = false;
+  else set = true;
 }
 
 void setArmPos(int pos) {
   armClampState ? armTarg = goalHeights[pos] : armTarg = armHeights[pos];
   set = false;
-}
-
-void toggleArmManual(){
-  ADIAnalogIn armPotentiometer(armPotentiometerPort);
-  armManual = !armManual;
-  if(armManual) setArmHeight(armPotentiometer.get_value());
 }
 
 void setArmClampState(bool state) {

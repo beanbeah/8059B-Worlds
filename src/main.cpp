@@ -84,7 +84,7 @@ void autonomous() {
 	waitPP(1000);
 	baseTurn(calcBaseTurn(30.5, 26, false));
 	waitTurn(1200);
-	driverArmPos(1);
+	setArmPos(1);
 	baseMove(10);
 	waitPP(1000);
 	delay(150);
@@ -131,10 +131,6 @@ void opcontrol() {
 	Motor armLeft(armLeftPort);
 	Motor armRight(armRightPort);
 
-	ADIDigitalOut clamp(clampPort);
-	ADIDigitalOut batch(batchPort);
-	ADIDigitalOut needle(needlePort);
-
 	FL1.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 	FL2.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
 	FL3.set_brake_mode(E_MOTOR_BRAKE_BRAKE);
@@ -171,35 +167,24 @@ void opcontrol() {
 		FR3.move(right);
 
 		if (armClampState){
-			if(init)master.rumble("...");
-			if ((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_L1)) && goalPos < 3){
-				if (goalPos == 1) goalPos = 3;
-				else ++goalPos;
+			if(init){
+				master.rumble("...");
+				init = false;
 			}
-			else if ((master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_L2)) && goalPos > 0)--goalPos;
+			if (master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) driverArmUp();
+			else if (master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)) driverArmDown();
 			if(tick%500==0)master.rumble("...");
-			driverArmPos(goalPos);
 		} else {
-			init = false;
-			if((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_L1)) && armPos < 3) driverArmPos(++armPos);
-			else if(master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_L2)){
-				if (armPos > 0) --armPos;
-				if (goalPos == 2){
-					goalPos = 0, armPos = 0;
-					toSet(true);
-				}
-				driverArmPos(armPos);
-			}
+			init = true;
+			if (master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) driverArmUp();
+			else if(master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)) driverArmDown();
 		}
 
 		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
 		if(master.get_digital_new_press(DIGITAL_R1)) toggleNeedleState();
 		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
 
-		if(partner.get_digital_new_press(DIGITAL_A)) toggleArmClampState();
-		if(partner.get_digital_new_press(DIGITAL_X)) toggleArmManual();
-
-		posPrintMaster();
+		master.print(2,0,"meong");
 		tick++;
 		delay(5);
   	}
