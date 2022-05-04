@@ -84,11 +84,12 @@ void Path::calcCurvature(){
   curv.push_back(0); //final point
 }
 void Path::calcMaxV(){
+  maxV.clear();
   for(int i = 0;i<n;++i){
-    // printf("MaxV: %.5f, Curve: %.5f\n", globalMaxV, K/curv[i]);
+    printf("MaxV: %.5f, Curve: %.5f\n", globalMaxV, k/curv[i]);
     maxV.push_back(std::min(globalMaxV, k/curv[i]));
   }
-  // printVector(maxV);
+  printVector(maxV);
 }
 void Path::calcTargV(){
   targV.clear();

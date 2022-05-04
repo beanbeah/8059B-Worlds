@@ -3,7 +3,7 @@
 const double armHeights[] = {1315,1670,1930,2630};
 const double goalHeights[] = {1315,1475,1920,2115};
 const double progArmHeights[] = {};
-double armKP = 0.39, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.01, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.39, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
 int count = 0;
 
@@ -54,7 +54,7 @@ void armControl(void*ignore) {
     armLeft.move(armPower);
     armRight.move(armPower);
     prevArmError = armError;
-    //if (count%10==0) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
+    if (count%10==0) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armPotentiometer.get_value(), armError, armPower);
     //if (count%10==0) printf("Left Motor Temp: %f, Right Motor Temp: %f\n", armLeft.get_temperature(), armRight.get_temperature());
 
     //setting pneumatics

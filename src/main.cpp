@@ -94,10 +94,17 @@ void autonomous() {
 	delay(300);
 	baseMove(11.7);
 	waitPP(1000);
+
+	//intake L-shape rings
+	// driverArmPos(0);
+	// baseMove(-12);
+	// waitPP(1000);
+	// baseTurn(180,0.1);
+	// waitTurn(2000);
+	// setMaxRPMV(400);
+	// baseMove(-90);
+	// waitPP(5000);
 	printf("Ended in %.2f seconds\n", (millis()-start)/1000);
-
-
-
 
 }
 
