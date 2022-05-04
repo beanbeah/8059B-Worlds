@@ -147,7 +147,7 @@ void opcontrol() {
 	Controller partner(E_CONTROLLER_PARTNER);
 
 	int armPos = 0, goalPos = 0, tiltPos = 0;
-	bool tankDrive = true, init = true;
+	bool tankDrive = true, init = true,partnerOveride = false;
 	int tick = 0;
 	while(true) {
 		double left, right;
@@ -172,19 +172,22 @@ void opcontrol() {
 
 		if (armClampState){
 			if(init)master.rumble("...");
-			if (master.get_digital_new_press(DIGITAL_L1) && goalPos < 3){
+			if ((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_L1)) && goalPos < 3){
 				if (goalPos == 1) goalPos = 3;
 				else ++goalPos;
 			}
-			else if (master.get_digital_new_press(DIGITAL_L2) && goalPos > 0)--goalPos;
+			else if ((master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_L2)) && goalPos > 0)--goalPos;
 			if(tick%500==0)master.rumble("...");
 			driverArmPos(goalPos);
 		} else {
 			init = false;
-			if(master.get_digital_new_press(DIGITAL_L1) && armPos < 3) driverArmPos(++armPos);
-			else if(master.get_digital_new_press(DIGITAL_L2)){
+			if((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_L1)) && armPos < 3) driverArmPos(++armPos);
+			else if(master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_L2)){
 				if (armPos > 0) --armPos;
-				if (goalPos == 2)goalPos = 0, armPos = 0;
+				if (goalPos == 2){
+					goalPos = 0, armPos = 0;
+					toSet(true);
+				}
 				driverArmPos(armPos);
 			}
 		}
@@ -193,8 +196,8 @@ void opcontrol() {
 		if(master.get_digital_new_press(DIGITAL_R1)) toggleNeedleState();
 		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
 
+		if(partner.get_digital_new_press(DIGITAL_A)) toggleArmClampState();
 		if(partner.get_digital_new_press(DIGITAL_X)) toggleArmManual();
-		if(partner.get_digital_new_press(DIGITAL_R1)) toggleArmClampState();
 
 		posPrintMaster();
 		tick++;

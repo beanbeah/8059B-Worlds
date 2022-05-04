@@ -13,6 +13,7 @@ void toggleBatchState();
 void setNeedleState(bool state);
 void toggleNeedleState();
 double rateLimit(double input, double limit);
+void toSet(bool state);
 
 extern bool armClampState, needleState, batchState;
 #endif

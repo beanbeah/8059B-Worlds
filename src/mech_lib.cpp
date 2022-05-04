@@ -1,23 +1,25 @@
 #include "main.h"
 
-const double armHeights[] = {1315,1670,1930,2630};
+const double armHeights[] = {1315,1680,1950,2615};
 const double goalHeights[] = {1315,1475,1920,2115};
 const double progArmHeights[] = {};
-double armKP = 0.39, goalKP = 0.85, armDownKP = 0.4, armKD = 0.12, armKI = 0.02, armTarg = armHeights[0], prevArmError=0;
+double armKP = 0.6, goalKP = 0.85, armDownKP = 0.3, armKD = 0.01, armKI = 0.01, armTarg = armHeights[0], prevArmError=0;
 bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
 int count = 0;
 
 /**
+4/5/2022:
+* Rubber Bands Changed
+* armKP, armKD changed.
+
 Notes for tuning (since latex degrades over time)
-kP: 0.38 - 0.42 least oscillation
+kP: 0.6-0.7
 kD: 0.08 - 0.12
 kI: 0.01 - 0.02
 
 downKP: 0.3 - 0.4
 goalKP: 0.8 - 1.0
 
-magic constants:
-down: -10
 **/
 
 void armControl(void*ignore) {
@@ -36,19 +38,20 @@ void armControl(void*ignore) {
     double armError = armTarg - armPotentiometer.get_value();
     double deltaError = armError - prevArmError;
     double integral = integral + armError;
-    if (fabs(armError) <= 12 || fabs(armError) >= 20)integral=0;
+    if (fabs(armError) <= 15 || fabs(armError) >= 20)integral=0;
     double armPower;
 
     //PID
     if (armClampState) armPower = (armError>0?armError*goalKP : armError*armDownKP) + deltaError * armKD;
-    else armPower = (armError>0?armError*armKP : armError*armDownKP - 10) + deltaError * armKD + armKI * integral;
+    else armPower = (armError>0?armError*armKP : armError*armDownKP) + deltaError * armKD + armKI * integral;
 
     if (armManual) armPower = partner.get_analog(ANALOG_RIGHT_Y);
     else {
       // rate Limiting/magic constants
       if (armTarg == armHeights[0]) armPower = rateLimit(armPower,-100);
       //if (armTarg == armHeights[1]) armPower += 10;
-      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,100);
+      if (armTarg == armHeights[3]) armPower = rateLimit(armPower,120);
+      if (fabs(armError) <= 8) armPower = armPower / 2; //aim to reduce oscillation.
     }
 
     armLeft.move(armPower);
@@ -127,4 +130,8 @@ double rateLimit(double input, double limit){
   (limit < 0) ? exceed = (input <= limit) : exceed = (input >= limit);
   if (exceed) return limit;
   else return input;
+}
+
+void toSet(bool state){
+  set = state;
 }
