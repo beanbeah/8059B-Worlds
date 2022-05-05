@@ -8,7 +8,7 @@ void Odometry(void * ignore){
   /** D loop variables */
   double prevEncdR = 0, prevEncdS = 0, prevBearing = bearing;
   int count = 0;
-  while(!COMPETITION_MODE || competition::is_autonomous()){
+  while(true){
     // Amount moved by robot
     double encdChangeR = encdR-prevEncdR;
     double encdChangeS = encdS-prevEncdS;
@@ -34,11 +34,11 @@ void Odometry(void * ignore){
     position = position + rotatedOffset;
 
     // if(count++ % 100 == 0) printf("X: %.2f, Y: %.2f, bearing: %.2f\n", position.getX(), position.getY(), bearing/toRad);
-    
-    
+
+
     master.print(2, 0, "%.2f, %.2f, %.2f          ", position.getX(), position.getY(), bearing/toRad);
-    
-    
+
+
     // printf("sDis: %.5f, sBearing: %.5f\t", sDis, sBearing/toRad);
     // printf("dX: %.2f, dY: %.5f\n", deltaX, deltaY);
 

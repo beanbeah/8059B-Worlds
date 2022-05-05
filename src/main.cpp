@@ -14,19 +14,12 @@ void initialize() {
 	Motor FR1(FR1Port,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
 	Motor FR2(FR2Port,E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_DEGREES);
 	Motor FR3(FR3Port,E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_DEGREES);
-
-	//Lift green
 	Motor armLeft(armLeftPort,E_MOTOR_GEARSET_36,true,E_MOTOR_ENCODER_DEGREES);
 	Motor armRight(armRightPort,E_MOTOR_GEARSET_36,false,E_MOTOR_ENCODER_DEGREES);
-
-	//penumatic init
 	ADIDigitalOut clamp(clampPort);
 	ADIDigitalOut batch(batchPort);
 	ADIDigitalOut needle(needlePort);
-
-
-	//sensor init
-	//ADIAnalogIn armPotentiometer(armPotentiometerPort);
+	ADIAnalogIn armPotentiometer(armPotentiometerPort);
 	Rotation encoderR(encdRPort);
 	Rotation encoderS(encdSPort);
 	Rotation armRot(armRotPort);
@@ -37,8 +30,8 @@ void initialize() {
 	armRot.set_reversed(true);
 	imu.reset();
 
-	// Mech tasks
 	Task sensorTask(sensors, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Sensor Task");
+	Task debugTask(Debug,(void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
 	Task armControlTask(armControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Arm Control Task");
 }
 
@@ -76,7 +69,7 @@ void autonomous() {
 	double smooth = 0.75;
 	setOffset(-90);
 	baseTurn(-90);
-	delay(50);
+	delay(5);
 	Task controlTask(PPControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "PP Task");
 	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
 
@@ -95,27 +88,52 @@ void autonomous() {
 	waitPP(1000);
 	delay(250);
 	setBatchState(false);
-	delay(1150);
+	delay(900);
+	//reset batching system (needle stuck edge case)
+	setBatchState(true);
+	delay(900);
+	setBatchState(false);
+	delay(800);
 	setNeedleState(false);
-	delay(300);
 	baseMove(11.7);
 	waitPP(1000);
 
-	//intake L-shape rings
-	 // driverArmPos(0);
-	 // basePP({position,Node(31.08, 15.30),Node(23.36, 6.60),Node(23.33, 19.60)},1-smooth,smooth,12,true);
-	 // waitPP(5000);
-	 // printf("Ended in %.2f seconds\n", (millis()-start)/1000);
-	 // setMaxRPMV(325);
-	 // baseMove(-30);
-	 // waitPP(2000);
-	 // printf("Ended in %.2f seconds\n", (millis()-start)/1000);
-	 // setMaxRPMV(500);
+	//intake L-shape rings (spot turn)
+	driverArmPos(0);
 
-	 //baseMove(-40);
-	 //waitPP(2000);
+	baseMove(-12);
+	waitPP(1000);
+	baseTurn(180,0.1);
+	waitTurn(1250);
+	baseMove(-30);
+	waitPP(1000);
+	setMaxRPMV(300);
+	baseMove(-25);
+	waitPP(2000);
+	baseMove(-34);
+	waitPP(1500);
+	/*
+	Curving to intake rings
+	std::vector<Node> ringCurve = {position,Node(44.2,18.8), Node(40,5.8), Node(33,7.5)};
+	basePP(ringCurve,1-smooth,smooth,5); //tune lookahead up to 10
+	waitPP(2500);
+	setMaxRPMV(300);
+	baseMove(-25);
+	waitPP(2500);
+	std::vector<Node> mogoCurve = {position, Node(22.6,66.1), Node(22.66,81.04)};
+	setMaxRPMV(500);
+	basePP(mogoCurve,1-smooth,smooth,10);
+	waitPP(2500);
+	*/
+	// toSet(true);
+	// setArmHeight(32);
+	// baseMove(15);
+	// waitPP(1000);
+	// delay(250);
+	// setBatchState(false);
 	printf("Ended in %.2f seconds\n", (millis()-start)/1000);
-
+	controlTask.remove();
+	odometryTask.remove();
 }
 
 
@@ -210,6 +228,7 @@ void opcontrol() {
 		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();
 		if(master.get_digital_new_press(DIGITAL_R1)) toggleNeedleState();
 		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
+		if (master.get_digital_new_press(DIGITAL_B)) resetLift();
 
 		master.print(2,0,"meong");
 		tick++;

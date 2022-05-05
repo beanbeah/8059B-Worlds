@@ -15,5 +15,6 @@ double rateLimit(double input, double limit);
 int findPosition(const double arr[], int n, double k);
 int getNearestPosition();
 void toSet(bool state);
+void resetLift();
 extern bool armClampState, needleState, batchState,armManual;
 #endif

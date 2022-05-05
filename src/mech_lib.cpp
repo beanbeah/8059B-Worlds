@@ -1,11 +1,14 @@
 #include "main.h"
 
-const double armHeights[] = {0,34,56,107.50};
-const double goalHeights[] = {0,10,55,75};
+const double armHeights[] = {0,28,52,101.50};
+const double goalHeights[] = {0,16,55,75};
 const double progArmHeights[] = {};
-double armKP = 4.85, armDownKP = 4.5, goalKP = 6.5, armKD = 0.1, armKI = 0, armTarg = armHeights[0], prevArmError=0;
-bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, toDelay = false;
-int count = 0;
+double armKP = 4.85, armDownKP = 4.5, goalKP = 6.6, armKD = 0.1, armKI = 0, armTarg = armHeights[0], prevArmError=0;
+bool armClampState = LOW, needleState = LOW, batchState = LOW, set = true, armManual = false, needleDelay = false, armClampDelay = false;
+int needleCount = 0, armClampCount = 0;
+
+bool hardOveride = false, resetRot = false;
+double hardPot = 1300;
 
 /**
 kP: 4.5 - 5.2
@@ -26,7 +29,7 @@ void armControl(void*ignore) {
   ADIDigitalOut clamp(clampPort);
   ADIDigitalOut batch(batchPort);
   ADIDigitalOut needle(needlePort);
-  //ADIAnalogIn armPotentiometer(armPotentiometerPort);
+  ADIAnalogIn armPotentiometer(armPotentiometerPort);
   Rotation armRot(armRotPort);
   ADIDigitalIn armLimit(armLimitPort);
 
@@ -35,7 +38,17 @@ void armControl(void*ignore) {
   int tick = 0;
 
   while(true) {
-    double armError = armTarg - (armRot.get_position()/100);
+    int armPot = armPotentiometer.get_value();
+    if (resetRot){
+      printf("ArmPot: %d", armPot);
+      armRot.reset_position();
+    	armRot.set_reversed(true);
+      delay(2000);
+      resetRot = false;
+    }
+    double armError;
+    if (hardOveride) armError = hardPot - armPot;
+    else armError = armTarg - (armRot.get_position()/100);
     double deltaError = armError - prevArmError;
     double integral = integral + armError;
     if (fabs(armError) <= 12 || fabs(armError) >= 20)integral=0;
@@ -45,11 +58,12 @@ void armControl(void*ignore) {
     if (armClampState) armPower = (armError>0?armError*goalKP : armError*armDownKP) + deltaError * armKD;
     else armPower = (armError>0?armError*armKP : armError*armDownKP - 8) + deltaError * armKD + armKI * integral;
 
+    if (hardOveride) armPower = armError * 0.4 + deltaError * 0.1;
 
     if (partner.get_digital_new_press(DIGITAL_X)) armManual = !armManual;
     if (armManual){
       armPower = partner.get_analog(ANALOG_RIGHT_Y) / 1.5;
-      armTarg = armRot.get_position();
+      armTarg = (armRot.get_position()/100);
     }
     else {
       // rate Limiting/magic constants
@@ -62,29 +76,39 @@ void armControl(void*ignore) {
        //}
     }
 
-
     armLeft.move(armPower);
     armRight.move(armPower);
     prevArmError = armError;
-    if (count%10==0 && !armManual) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armRot.get_position()/100, armError, armPower);
+    if (needleCount%10==0 && !armManual && !competition::is_autonomous()) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armRot.get_position()/100, armError, armPower);
     //if (count%10==0) printf("Left Motor Temp: %f, Right Motor Temp: %f\n", armLeft.get_temperature(), armRight.get_temperature());
+    if (hardOveride) printf("Pot: %d\n", armPot);
+    //honestly quite scuffed given that we are using ticks/counter to add delays
 
     //setting pneumatics
     if (!set && !armClampState){
       if (armError> 0 && !needleState){
         batchState = true;
-        count = 0;
-        toDelay = true;
+        needleCount = 0;
+        needleDelay = true;
       }
       set = true;
     }
-
-    if (count == 10 && toDelay){
+    if (needleCount == 10 && needleDelay){
       needleState = true;
-      toDelay = false;
+      needleDelay = false;
     }
-    if (armLimit.get_new_press())armClampState=true;
-    count++;
+
+    if (armLimit.get_new_press()){
+      armClampDelay = true;
+      armClampCount = 0;
+    }
+    if (armClampCount == 5 && armClampDelay) {
+      armClampState = true;
+      armClampDelay = false;
+    }
+
+    needleCount++;
+    armClampCount++;
     batch.set_value(batchState);
     clamp.set_value(armClampState);
     needle.set_value(needleState);
@@ -149,4 +173,11 @@ int getNearestPosition() {
 
 void toSet(bool state){
   set = !state;
+}
+
+void resetLift() {
+  hardOveride = true;
+  delay(2000);
+  resetRot = true;
+  hardOveride = false;
 }
