@@ -24,13 +24,17 @@ void initialize() {
 	ADIDigitalOut batch(batchPort);
 	ADIDigitalOut needle(needlePort);
 
+
 	//sensor init
-	ADIAnalogIn armPotentiometer(armPotentiometerPort);
+	//ADIAnalogIn armPotentiometer(armPotentiometerPort);
 	Rotation encoderR(encdRPort);
 	Rotation encoderS(encdSPort);
+	Rotation armRot(armRotPort);
 	Imu imu(imuPort);
 	encoderR.reset_position();
 	encoderS.reset_position();
+	armRot.reset_position();
+	armRot.set_reversed(true);
 	imu.reset();
 
 	// Mech tasks
@@ -69,6 +73,7 @@ void competition_initialize() {}
  */
 void autonomous() {
 	double start = millis();
+	double smooth = 0.75;
 	setOffset(-90);
 	baseTurn(-90);
 	delay(50);
@@ -84,29 +89,36 @@ void autonomous() {
 	waitPP(1000);
 	baseTurn(calcBaseTurn(30.5, 26, false));
 	waitTurn(1200);
-	setArmPos(1);
+	toSet(true);
+	setArmHeight(32);
 	baseMove(10);
 	waitPP(1000);
-	delay(150);
+	delay(250);
 	setBatchState(false);
-	delay(1000);
+	delay(1150);
 	setNeedleState(false);
 	delay(300);
 	baseMove(11.7);
 	waitPP(1000);
 
 	//intake L-shape rings
-	// driverArmPos(0);
-	// baseMove(-12);
-	// waitPP(1000);
-	// baseTurn(180,0.1);
-	// waitTurn(2000);
-	// setMaxRPMV(400);
-	// baseMove(-90);
-	// waitPP(5000);
+	 // driverArmPos(0);
+	 // basePP({position,Node(31.08, 15.30),Node(23.36, 6.60),Node(23.33, 19.60)},1-smooth,smooth,12,true);
+	 // waitPP(5000);
+	 // printf("Ended in %.2f seconds\n", (millis()-start)/1000);
+	 // setMaxRPMV(325);
+	 // baseMove(-30);
+	 // waitPP(2000);
+	 // printf("Ended in %.2f seconds\n", (millis()-start)/1000);
+	 // setMaxRPMV(500);
+
+	 //baseMove(-40);
+	 //waitPP(2000);
 	printf("Ended in %.2f seconds\n", (millis()-start)/1000);
 
 }
+
+
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -143,7 +155,7 @@ void opcontrol() {
 	Controller partner(E_CONTROLLER_PARTNER);
 
 	int armPos = 0, goalPos = 0, tiltPos = 0;
-	bool tankDrive = true, init = true,partnerOveride = false;
+	bool tankDrive = true, init = true, state = false;
 	int tick = 0;
 	while(true) {
 		double left, right;
@@ -167,17 +179,32 @@ void opcontrol() {
 		FR3.move(right);
 
 		if (armClampState){
-			if(init){
-				master.rumble("...");
-				init = false;
+			if(init)master.rumble("...");
+			if ((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) && goalPos < 3){
+				if (goalPos == 1) goalPos = 3;
+				else ++goalPos;
 			}
-			if (master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) driverArmUp();
-			else if (master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)) driverArmDown();
+			else if ((master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)) && goalPos > 0)--goalPos;
 			if(tick%500==0)master.rumble("...");
+			driverArmPos(goalPos);
 		} else {
-			init = true;
-			if (master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) driverArmUp();
-			else if(master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)) driverArmDown();
+			init = false;
+			if((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) && armPos < 3) driverArmPos(++armPos);
+			else if(master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)){
+				if (armPos > 0) {
+					state = false;
+					--armPos;
+				}
+				if (goalPos == 2){
+					goalPos = 0, armPos = 0;
+					state = true;
+				}
+				driverArmPos(armPos,state);
+			}
+		}
+
+		if (armManual && !armClampState){
+			armPos = getNearestPosition();
 		}
 
 		if(master.get_digital_new_press(DIGITAL_X)) toggleArmClampState();

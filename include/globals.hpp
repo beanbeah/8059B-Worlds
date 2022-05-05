@@ -29,5 +29,6 @@
 #define encdSPort 16
 #define encdRPort 15
 #define imuPort 21
+#define armRotPort 6
 
 #endif
