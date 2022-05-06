@@ -1,6 +1,6 @@
 #include "main.h"
 
-const double armHeights[] = {0,28,52,101.50};
+const double armHeights[] = {0,32,54,103.50};
 const double goalHeights[] = {0,16,55,75};
 const double progArmHeights[] = {};
 double armKP = 4.85, armDownKP = 4.5, goalKP = 6.6, armKD = 0.1, armKI = 0, armTarg = armHeights[0], prevArmError=0;
@@ -79,7 +79,7 @@ void armControl(void*ignore) {
     armLeft.move(armPower);
     armRight.move(armPower);
     prevArmError = armError;
-    if (needleCount%10==0 && !armManual && !competition::is_autonomous()) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armRot.get_position()/100, armError, armPower);
+  //  if (needleCount%10==0 && !armManual && !competition::is_autonomous()) printf("Target: %f, Potentiometer: %d, Error: %f, Power: %f\n", armTarg, armRot.get_position()/100, armError, armPower);
     //if (count%10==0) printf("Left Motor Temp: %f, Right Motor Temp: %f\n", armLeft.get_temperature(), armRight.get_temperature());
     if (hardOveride) printf("Pot: %d\n", armPot);
     //honestly quite scuffed given that we are using ticks/counter to add delays

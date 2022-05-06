@@ -31,9 +31,11 @@ void initialize() {
 	imu.reset();
 
 	Task sensorTask(sensors, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Sensor Task");
-	Task debugTask(Debug,(void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
+	//Task debugTask(Debug,(void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Debug Task");
 	Task armControlTask(armControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Arm Control Task");
+
 }
+
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -73,9 +75,10 @@ void autonomous() {
 	Task controlTask(PPControl, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "PP Task");
 	Task odometryTask(Odometry, (void*)"PROS", TASK_PRIORITY_DEFAULT, TASK_STACK_DEPTH_DEFAULT, "Odom Task");
 
+
 	//get AWP
 	enableBase(true,true);
-	delay(250);
+	delay(200);
 	baseMove(-20);
 	waitPP(1000);
 	baseMove(12);
@@ -83,17 +86,17 @@ void autonomous() {
 	baseTurn(calcBaseTurn(30.5, 26, false));
 	waitTurn(1200);
 	toSet(true);
-	setArmHeight(32);
+	setArmHeight(31);
 	baseMove(10);
 	waitPP(1000);
-	delay(280);
+	delay(250);
 	setBatchState(false);
-	delay(850);
+	delay(800);
 	//reset batching system (needle stuck edge case)
 	setBatchState(true);
-	delay(750);
+	delay(700);
 	setBatchState(false);
-	delay(750);
+	delay(700);
 	setNeedleState(false);
 	baseMove(11.7);
 	waitPP(1000);
@@ -110,15 +113,14 @@ void autonomous() {
 
 	//align to mogo
 	setMaxRPMV(500);
-	baseTurn(calcBaseTurn(-6.8,106,false));
+	baseTurn(calcBaseTurn(-4.2,108,false));
 	waitTurn(950);
 	toSet(true);
-	setArmHeight(32);
-	baseMove(24.5);
+	setArmHeight(31);
+	baseMove(21);
 	waitPP(1000);
-	delay(100);
-	setBatchState(false);
-	printf("Ended in %.2f seconds\n", (millis()-start)/1000);
+	//exit first
+	delay(125);
 	controlTask.remove();
 	odometryTask.remove();
 }
@@ -184,16 +186,19 @@ void opcontrol() {
 		FR3.move(right);
 
 		if (armClampState){
-			if(init)master.rumble("...");
+			if(init){
+				master.rumble("...");
+				init = false;
+			}
 			if ((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) && goalPos < 3){
 				if (goalPos == 1) goalPos = 3;
 				else ++goalPos;
 			}
 			else if ((master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)) && goalPos > 0)--goalPos;
-			if(tick%500==0)master.rumble("...");
+			if(tick%250==0)master.rumble("...");
 			driverArmPos(goalPos);
 		} else {
-			init = false;
+			init = true;
 			if((master.get_digital_new_press(DIGITAL_L1) || partner.get_digital_new_press(DIGITAL_R1)) && armPos < 3) driverArmPos(++armPos);
 			else if(master.get_digital_new_press(DIGITAL_L2) || partner.get_digital_new_press(DIGITAL_R2)){
 				if (armPos > 0) {
@@ -217,8 +222,8 @@ void opcontrol() {
 		if(master.get_digital_new_press(DIGITAL_R2)) toggleBatchState();
 		if (master.get_digital_new_press(DIGITAL_B)) resetLift();
 
-		master.print(2,0,"meong");
 		tick++;
+		posPrintMaster();
 		delay(5);
   	}
 }

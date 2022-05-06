@@ -123,7 +123,7 @@ void PPControl(void * ignore){
 
   int count = 0;
 
-  while(true){
+  while(competition::is_autonomous()){
     if(count % 10 == 0) printf("status: %s\t", (enablePP? "enabled": "disabled"));
 
     if(enablePP) {

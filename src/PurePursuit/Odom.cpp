@@ -8,7 +8,7 @@ void Odometry(void * ignore){
   /** D loop variables */
   double prevEncdR = 0, prevEncdS = 0, prevBearing = bearing;
   int count = 0;
-  while(true){
+  while(competition::is_autonomous()){
     // Amount moved by robot
     double encdChangeR = encdR-prevEncdR;
     double encdChangeS = encdS-prevEncdS;
