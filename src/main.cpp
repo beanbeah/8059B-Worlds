@@ -86,51 +86,38 @@ void autonomous() {
 	setArmHeight(32);
 	baseMove(10);
 	waitPP(1000);
-	delay(250);
+	delay(280);
 	setBatchState(false);
-	delay(900);
+	delay(850);
 	//reset batching system (needle stuck edge case)
 	setBatchState(true);
-	delay(900);
+	delay(750);
 	setBatchState(false);
-	delay(800);
+	delay(750);
 	setNeedleState(false);
 	baseMove(11.7);
 	waitPP(1000);
 
 	//intake L-shape rings (spot turn)
 	driverArmPos(0);
-
 	baseMove(-12);
-	waitPP(1000);
-	baseTurn(180,0.1);
-	waitTurn(1250);
-	baseMove(-30);
-	waitPP(1000);
+	waitPP(850);
+	baseTurn(180);
+	waitTurn(950);
 	setMaxRPMV(300);
-	baseMove(-25);
-	waitPP(2000);
-	baseMove(-34);
-	waitPP(1500);
-	/*
-	Curving to intake rings
-	std::vector<Node> ringCurve = {position,Node(44.2,18.8), Node(40,5.8), Node(33,7.5)};
-	basePP(ringCurve,1-smooth,smooth,5); //tune lookahead up to 10
-	waitPP(2500);
-	setMaxRPMV(300);
-	baseMove(-25);
-	waitPP(2500);
-	std::vector<Node> mogoCurve = {position, Node(22.6,66.1), Node(22.66,81.04)};
+	baseMove(-75);
+	waitPP(3250);
+
+	//align to mogo
 	setMaxRPMV(500);
-	basePP(mogoCurve,1-smooth,smooth,10);
-	waitPP(2500);
-	*/
-	// toSet(true);
-	// setArmHeight(32);
-	// baseMove(15);
-	// waitPP(1000);
-	// delay(250);
-	// setBatchState(false);
+	baseTurn(calcBaseTurn(-6.8,106,false));
+	waitTurn(950);
+	toSet(true);
+	setArmHeight(32);
+	baseMove(24.5);
+	waitPP(1000);
+	delay(100);
+	setBatchState(false);
 	printf("Ended in %.2f seconds\n", (millis()-start)/1000);
 	controlTask.remove();
 	odometryTask.remove();
